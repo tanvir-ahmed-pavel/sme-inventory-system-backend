@@ -29,6 +29,9 @@ class AuthenticationController extends Controller
      */
     public function user()
     {
-        return auth()->user();
+        $user = auth('api')->user();
+        return response()->json([
+            'user' => $user,
+        ], 200);
     }
 }

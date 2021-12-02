@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Route;
 Route::group(['namespace' => "\App\Http\Controllers\Api", 'as' => 'api.'], function () {
 
     Route::post('login', 'LoginController@login')->name('login');
+    Route::get('hi', function (){
+        return response()->json(auth()->user(), 200);
+    })->middleware('auth:api');
+
     Route::get('/', function (){
         return response()->json("token cleared successfully", 200);
     });

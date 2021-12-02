@@ -7,6 +7,7 @@ use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 /**
  * @group Auth endpoints
@@ -47,35 +48,23 @@ class LoginController extends Controller
     {
         $this->clearLoginAttempts($request);
 
-        if ($response = $this->authenticated($request, $this->guard()->user())) {
-            return $response;
-        }
-
         return response()->json([
             'token'    => $request->user()->createToken($request->input('device_name'))->accessToken,
             'user'     => $request->user()
-        ]);
+        ], 200);
     }
 
     /**
-     * Log the user out of the application.
+     * Get the failed login response instance.
      *
-     * @authenticated
-     * @response status=204 scenario="Success" {}
-     * @response status=400 scenario="Unauthenticated" {
-     *     "message": "Unauthenticated."
-     * }
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Symfony\Component\HttpFoundation\Response
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Validation\ValidationException
      */
-    public function logout(Request $request)
+    protected function sendFailedLoginResponse(Request $request)
     {
-        $request->user()->token()->revoke();
-
-        return $request->wantsJson()
-            ? new Response('', 204)
-            : redirect('/');
+        return response()->json(['errors'=>[$this->username() => [trans('auth.failed')]]], 422);
     }
 
     /**
@@ -122,5 +111,24 @@ class LoginController extends Controller
         $this->incrementLoginAttempts($request);
 
         return $this->sendFailedLoginResponse($request);
+    }
+
+    /**
+     * Log the user out of the application.
+     *
+     * @authenticated
+     * @response status=204 scenario="Success" {}
+     * @response status=400 scenario="Unauthenticated" {
+     *     "message": "Unauthenticated."
+     * }
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        $request->user()->token()->revoke();
+
+        return response()->json('successfully log out',200);
     }
 }
